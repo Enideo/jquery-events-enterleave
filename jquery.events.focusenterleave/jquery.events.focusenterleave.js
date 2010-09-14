@@ -1,5 +1,5 @@
 /**
- * jQuery Attention
+ * jQuery EnterLeave
  * Special events: focusenter, focusleave
  * @license Copyright 2010 Enideo. Released under dual MIT and GPL licenses.
 */
