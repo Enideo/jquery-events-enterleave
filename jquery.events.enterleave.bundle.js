@@ -1,117 +1,113 @@
 /**
  * jQuery EnterLeave
  * Special events: focusenter, focusleave, enter, leave
- * @license Copyright 2010 Enideo. Released under dual MIT and GPL licenses.
+ * @license Copyright 2013 Enideo. Released under dual MIT and GPL licenses.
 */
 
+$.event.special.focusenter = {
+  setup: function(data, namespaces) {
+    $(this).bind('focusin.focusenter', $.event.special.focusenter.handler);
+  },
 
-(function($) {
+  teardown: function(namespaces) {
+    $(this).unbind('focusin.focusenter', $.event.special.focusenter.handler);
+  },
 
-  $.event.special.focusenter = {
-    setup: function(data, namespaces) {
-      $(this).bind('focusin.focusenter', $.event.special.focusenter.handler);
-    },
+  handler: function(event){
+    var $self = $(event.currentTarget);
 
-    teardown: function(namespaces) {
-      $(this).unbind('focusin.focusenter', $.event.special.focusenter.handler);
-    },
+    clearTimeout($self.data('focusleaveTimeout'));
+    $self.removeData('focusleaveTimeout');
 
-    handler: function(event){
-      var self = $(event.currentTarget);
-
-      clearTimeout(self.data('focusleaveTimeout'));
-      self.removeData('focusleaveTimeout');
-
-      if( !self.data('focusentered') ){
-        self.data('focusentered',true);
-        event.type = 'focusenter';
-        $.event.handle.apply(this, arguments);
-      }
+    if( !$self.data('focusentered') ){
+      $self.data('focusentered',true);
+      event.type = 'focusenter';
+      ($.event.dispatch || $.event.handle).apply(this, [event]);
     }
-  };
+  }
+};
 
-  $.event.special.focusleave = {
-    setup: function(data, namespaces) {
-      $(this).bind('focusout.focusleave', $.event.special.focusleave.handler);
-    },
+$.event.special.focusleave = {
+  setup: function(data, namespaces) {
+    $(this).bind('focusout.focusleave', $.event.special.focusleave.handler);
+  },
 
-    teardown: function(namespaces) {
-      $(this).unbind('focusout.focusleave', $.event.special.focusleave.handler);
-    },
+  teardown: function(namespaces) {
+    $(this).unbind('focusout.focusleave', $.event.special.focusleave.handler);
+  },
 
-    handler: function(event){
+  handler: function(event){
 
-      var self = event.currentTarget,
-        elem = this,
-        args = arguments,
-        timeout = setTimeout(function(){
+    var $self = $(event.currentTarget),
+      elem = this,
+      timeout = setTimeout(function(){
 
-          event.type = 'focusleave';
-          $.event.handle.apply(elem, args);
-          $(self).removeData('focusentered');
+        event.type = 'focusleave';
+        ($.event.dispatch || $.event.handle).apply(elem, [event]);
+        $self.removeData('focusentered');
 
-        },100);
+      },100);
 
-      $(self).data('focusleaveTimeout',timeout);
+    $self.data('focusleaveTimeout',timeout);
+
+  }
+};
+
+
+$.event.special.enter = {
+  setup: function(data, namespaces) {
+    $(this).bind('mouseenter.enter focusenter.enter', $.event.special.enter.handler);
+  },
+
+  teardown: function(namespaces) {
+    $(this).unbind('mouseenter.enter focusenter.enter', $.event.special.enter.handler);
+  },
+
+  handler: function(event){
+
+    var self = $(event.currentTarget),
+     originalEventType = event.type;
+
+    if( !self.data("hasmouseenter") && !self.data("hasfocusenter") ){
+      event.type = 'enter';
+      event.originalEventType = originalEventType;
+      ($.event.dispatch || $.event.handle).apply(this, [event]);
     }
-  };
 
-  $.event.special.enter = {
-    setup: function(data, namespaces) {
-      $(this).bind('mouseenter.enter focusenter.enter', $.event.special.enter.handler);
-    },
-
-    teardown: function(namespaces) {
-      $(this).unbind('mouseenter.enter focusenter.enter', $.event.special.enter.handler);
-    },
-
-    handler: function(event){
-
-      var self = $(event.currentTarget),
-       originalEventType = event.type;
-
-      if( !self.data("hasmouseenter") && !self.data("hasfocusenter") ){
-        event.type = 'enter';
-        event.originalEventType = originalEventType;
-        $.event.handle.apply(this, arguments);
-      }
-
-      if( originalEventType=='mouseenter' ){
-        self.data("hasmouseenter",true);
-      }else{
-        self.data("hasfocusenter",true);
-      }
-
+    if( originalEventType=='mouseenter' ){
+      self.data("hasmouseenter",true);
+    }else{
+      self.data("hasfocusenter",true);
     }
-  };
 
-  $.event.special.leave = {
-    setup: function(data, namespaces) {
+  }
+};
 
-      $(this).bind('mouseleave.leave focusleave.leave', $.event.special.leave.handler);
-    },
+$.event.special.leave = {
+  setup: function(data, namespaces) {
 
-    teardown: function(namespaces) {
-      $(this).unbind('mouseleave.leave focusleave.leave', $.event.special.leave.handler);
-    },
+    $(this).bind('mouseleave.leave focusleave.leave', $.event.special.leave.handler);
+  },
 
-    handler: function(event){
+  teardown: function(namespaces) {
+    $(this).unbind('mouseleave.leave focusleave.leave', $.event.special.leave.handler);
+  },
 
-      var self = $(event.currentTarget);
+  handler: function(event){
 
-      if( event.type=='mouseleave' ){
-        self.data("hasmouseenter",false);
-      }else{
-        self.data("hasfocusenter",false);
-      }
+    var self = $(event.currentTarget);
 
-      if( !self.data("hasmouseenter") && !self.data("hasfocusenter") ){
-        event.originalEventType = event.type;
-        event.type = 'leave';
-        $.event.handle.apply(this, arguments);
-      }
-
+    if( event.type=='mouseleave' ){
+      self.data("hasmouseenter",false);
+    }else{
+      self.data("hasfocusenter",false);
     }
-  };
 
-})(jQuery);
+    if( !self.data("hasmouseenter") && !self.data("hasfocusenter") ){
+      event.originalEventType = event.type;
+      event.type = 'leave';
+      ($.event.dispatch || $.event.handle).apply(this, [event]);
+    }
+
+  }
+};
